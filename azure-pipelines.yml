@@ -6,22 +6,61 @@
 trigger:
 - master
 
-strategy:
-  matrix:
-    linux:
-      imageName: "ubuntu-latest"
-    mac:
-      imageName: "macOS-latest"
-    windows:
-      imageName: "windows-latest"
-  maxParallel: 3
+# To run build on different platforms
+# strategy:
+#   matrix:
+#     linux:
+#       imageName: "ubuntu-latest"
+#     mac:
+#       imageName: "macOS-latest"
+#     windows:
+#       imageName: "windows-latest"
+#   maxParallel: 3
 
 pool:
-  name: $(imageName)
+  name: Default
+
+strategy:
+  matrix:
+    net6:
+      dotnetVersion: '6.0.x'
+    net8:
+      dotnetVersion: '8.0.x'
+  maxParallel: 2
 
 variables:
   buildConfiguration: 'Release'
 
 steps:
+# 1. Install the specified .NET version for each matrix job
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '$(dotnetVersion)'
+  displayName: 'Install .NET SDK $(dotnetVersion)'
+
+# 2. Restore dependencies
+- script: dotnet restore
+  displayName: 'Restore dependencies'
+
+# 3. Build
 - script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+  displayName: 'Build $(dotnetVersion) $(buildConfiguration)'
+
+# 4. Test + Code Coverage (if you add a test project)
+# - script: dotnet test --configuration $(buildConfiguration) --collect:"XPlat Code Coverage" --results-directory $(System.DefaultWorkingDirectory)/TestResults
+#   displayName: 'Run tests and collect code coverage'
+
+# 5. Publish test results
+# - task: PublishTestResults@2
+#   inputs:
+#     testResultsFiles: '**/TestResults/*.trx'
+#   condition: succeededOrFailed()
+
+# 6. Publish code coverage results
+# - task: PublishCodeCoverageResults@2
+#   displayName: 'Publish code coverage'
+#   inputs:
+#     codeCoverageTool: 'Cobertura'
+#     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+#   condition: succeededOrFailed()
