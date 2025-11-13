@@ -37,6 +37,10 @@ steps:
   inputs:
     packageType: 'sdk'
     version: '$(dotnetVersion)'
+  env:
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    NODE_TLS_REJECT_UNAUTHORIZED: 0
   displayName: 'Install .NET SDK $(dotnetVersion)'
 
 # 2. Restore dependencies
